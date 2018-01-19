@@ -46,8 +46,12 @@ public class Client extends Thread {
         isRunning=true;
         while(isRunning){
             try {
-                bis.read(buffer);
-                handlePacket();
+                System.out.println("Socket connected : " + socket.isConnected() + ", bis available : " + bis.available());
+                if(bis.read(buffer)<0) {
+                    isRunning = false;
+                } else {
+                    handlePacket();
+                }
             } catch (IOException ex) {
                 System.err.println("reading from client failed");
             }
@@ -61,6 +65,7 @@ public class Client extends Thread {
                 handleLoginRequest();
                 break;
             case OPCode.REQ_REGISTER:
+                handleRegisterRequest();
                 break;
         }
     }
@@ -76,6 +81,7 @@ public class Client extends Thread {
     public void sendPacket(byte b){
         try {
             bos.write(b);
+            bos.flush();
         } catch (IOException ex) {
             Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -95,13 +101,33 @@ public class Client extends Thread {
 
     private void handleLoginRequest() {
         String id, pwd;
-        id = new String(Arrays.copyOfRange(buffer, 1, Config.MAX_ID_LEN)); 
-        pwd = new String(Arrays.copyOfRange(buffer, Config.MAX_ID_LEN+1, Config.MAX_ID_LEN+64)); //sha-512 는 64byte
-        
+        int idx;
+        for(idx=1;buffer[idx]!=0 && idx<=Config.MAX_ID_LEN;idx++);
+//        System.out.println(Arrays.toString(Arrays.copyOfRange(buffer, 1, idx)));
+        id = new String(Arrays.copyOfRange(buffer, 1, idx)); 
+        pwd = new String(Arrays.copyOfRange(buffer, Config.MAX_ID_LEN+1, Config.MAX_ID_LEN+64+1)); //sha-512 는 64byte
         if(DBManager.getInstance().authUser(id,pwd)){ // 로그인 성공
             sendPacket(OPCode.OK);
+            System.out.println("Login Success");
         } else {
             sendPacket(OPCode.NOK);
+            System.out.println("Login Failed");
+        }
+    }
+    
+    private void handleRegisterRequest(){
+        String id, pwd;
+        int idx;
+        for(idx=1;buffer[idx]!=0 && idx<=Config.MAX_ID_LEN;idx++);
+//        System.out.println(Arrays.toString(Arrays.copyOfRange(buffer, 1, idx)));
+        id = new String(Arrays.copyOfRange(buffer, 1, idx)); 
+        pwd = new String(Arrays.copyOfRange(buffer, Config.MAX_ID_LEN+1, Config.MAX_ID_LEN+64+1)); //sha-512 는 64byte
+        if(DBManager.getInstance().addUser(id,pwd)){ // 로그인 성공
+            sendPacket(OPCode.OK);
+            System.out.println("Register Success");
+        } else {
+            sendPacket(OPCode.NOK);
+            System.out.println("Register Failed");
         }
     }
     
