@@ -67,6 +67,9 @@ public class Client extends Thread {
             case OPCode.REQ_REGISTER:
                 handleRegisterRequest();
                 break;
+            case OPCode.SENSOR_DATA:
+                handleSensorData();
+                break;
         }
     }
     
@@ -129,6 +132,15 @@ public class Client extends Thread {
             sendPacket(OPCode.NOK);
             System.out.println("Register Failed");
         }
+    }
+    
+    private void handleSensorData(){
+        System.out.println("Handling Sensor Data");
+        String data;
+        int idx;
+        for(idx=1;buffer[idx]!=0 && idx<Config.BUFF_SIZE;idx++);
+        data = new String(Arrays.copyOfRange(buffer, 1, idx));
+        System.out.println(data);
     }
     
 }
