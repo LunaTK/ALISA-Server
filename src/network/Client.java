@@ -9,6 +9,8 @@ import database.DBManager;
 import utils.Config;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
@@ -24,15 +26,14 @@ public class Client extends Thread {
     
     private Socket socket;
     private boolean isRunning = false;
-    private BufferedOutputStream bos;
-    private BufferedInputStream bis;
-    private byte[] buffer;
+    private DataOutputStream dos;
+    private DataInputStream dis;
     
     public Client(Socket soc){
         this.socket = soc;
         try {
-            bos = new BufferedOutputStream(soc.getOutputStream());
-            bis = new BufferedInputStream(soc.getInputStream());
+            dos = new DataOutputStream(new BufferedOutputStream(soc.getOutputStream()));
+            dis = new DataInputStream(new BufferedInputStream(soc.getInputStream()));
         } catch (IOException ex) {
             System.err.println("Buffer Stream for Client Creation Failed");
         }
@@ -41,26 +42,26 @@ public class Client extends Thread {
     @Override
     public void run() {
         super.run(); //To change body of generated methods, choose Tools | Templates.
-        
-        buffer = new byte[Config.BUFF_SIZE];
+        byte opcode;
         isRunning=true;
         while(isRunning){
             try {
-                System.out.println("Socket connected : " + socket.isConnected() + ", bis available : " + bis.available());
-                if(bis.read(buffer)<0) {
+                System.out.println("Socket connected : " + socket.isConnected() + ", bis available : " + dis.available());
+                opcode = dis.readByte();
+                if(opcode<0) {
                     isRunning = false;
                 } else {
-                    handlePacket();
+                    handlePacket(opcode);
                 }
             } catch (IOException ex) {
-                System.err.println("reading from client failed");
+                System.err.println("Client Disconnected");
+                disconnect();
             }
         }
     }
     
-    private void handlePacket(){
-//        System.out.println("Packet received : " + Arrays.toString(buffer));
-        switch(buffer[0]){
+    private void handlePacket(byte opcode) throws IOException{
+        switch(opcode){
             case OPCode.REQ_LOGIN:
                 handleLoginRequest();
                 break;
@@ -73,73 +74,50 @@ public class Client extends Thread {
         }
     }
     
-    public void sendPacket(byte[] packet){
-        try {
-            bos.write(packet);
-        } catch (IOException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    
-    public void sendPacket(byte b){
-        try {
-            bos.write(b);
-            bos.flush();
-        } catch (IOException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
-    
     public void disconnect(){
         isRunning = false;
+        NetworkManager.getInstance().removeClient(this);
         if(socket==null) return;
         try {
-            bos.close();
-            bis.close();
+            dos.close();
+            dis.close();
             socket.close();
         } catch (IOException ex) {
             System.err.println("Client socket close failed");
         }
     }
 
-    private void handleLoginRequest() {
+    private void handleLoginRequest() throws IOException {
         String id, pwd;
-        int idx;
-        for(idx=1;buffer[idx]!=0 && idx<=Config.MAX_ID_LEN;idx++);
-//        System.out.println(Arrays.toString(Arrays.copyOfRange(buffer, 1, idx)));
-        id = new String(Arrays.copyOfRange(buffer, 1, idx)); 
-        pwd = new String(Arrays.copyOfRange(buffer, Config.MAX_ID_LEN+1, Config.MAX_ID_LEN+64+1)); //sha-512 는 64byte
+        id = dis.readUTF();
+        pwd = dis.readUTF();
         if(DBManager.getInstance().authUser(id,pwd)){ // 로그인 성공
-            sendPacket(OPCode.OK);
+            dos.writeByte(OPCode.OK);
             System.out.println("Login Success");
         } else {
-            sendPacket(OPCode.NOK);
+            dos.writeByte(OPCode.NOK);
             System.out.println("Login Failed");
         }
+        dos.flush();
     }
     
-    private void handleRegisterRequest(){
+    private void handleRegisterRequest() throws IOException {
         String id, pwd;
-        int idx;
-        for(idx=1;buffer[idx]!=0 && idx<=Config.MAX_ID_LEN;idx++);
-//        System.out.println(Arrays.toString(Arrays.copyOfRange(buffer, 1, idx)));
-        id = new String(Arrays.copyOfRange(buffer, 1, idx)); 
-        pwd = new String(Arrays.copyOfRange(buffer, Config.MAX_ID_LEN+1, Config.MAX_ID_LEN+64+1)); //sha-512 는 64byte
+        id = dis.readUTF();
+        pwd = dis.readUTF();
         if(DBManager.getInstance().addUser(id,pwd)){ // 로그인 성공
-            sendPacket(OPCode.OK);
+            dos.writeByte(OPCode.OK);
             System.out.println("Register Success");
-        } else {
-            sendPacket(OPCode.NOK);
+        } else 
+{            dos.writeByte(OPCode.NOK);
             System.out.println("Register Failed");
         }
+        dos.flush();
     }
     
-    private void handleSensorData(){
+    private void handleSensorData() throws IOException {
         System.out.println("Handling Sensor Data");
-        String data;
-        int idx;
-        for(idx=1;buffer[idx]!=0 && idx<Config.BUFF_SIZE;idx++);
-        data = new String(Arrays.copyOfRange(buffer, 1, idx));
+        String data = null;
         System.out.println(data);
     }
     
