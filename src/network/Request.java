@@ -118,7 +118,10 @@ public class Request extends Thread {
     private void handleSensorData() throws IOException {
         System.out.println("Handling Sensor Data");
         String data = null;
+        data = dis.readUTF();
         System.out.println(data);
+        dos.writeByte(OPCode.OK);
+        dos.flush();
     }
     
 }
