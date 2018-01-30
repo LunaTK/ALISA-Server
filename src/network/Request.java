@@ -22,14 +22,14 @@ import utils.OPCode;
  *
  * @author LunaTK
  */
-public class Client extends Thread {
+public class Request extends Thread {
     
     private Socket socket;
     private boolean isRunning = false;
     private DataOutputStream dos;
     private DataInputStream dis;
     
-    public Client(Socket soc){
+    public Request(Socket soc){
         this.socket = soc;
         try {
             dos = new DataOutputStream(new BufferedOutputStream(soc.getOutputStream()));
@@ -54,7 +54,7 @@ public class Client extends Thread {
                     handlePacket(opcode);
                 }
             } catch (IOException ex) {
-                System.err.println("Client Disconnected");
+                System.err.println("Request Session Closed");
                 disconnect();
             }
         }
@@ -76,7 +76,7 @@ public class Client extends Thread {
     
     public void disconnect(){
         isRunning = false;
-        NetworkManager.getInstance().removeClient(this);
+        NetworkManager.getInstance().removeRequest(this);
         if(socket==null) return;
         try {
             dos.close();
@@ -108,8 +108,8 @@ public class Client extends Thread {
         if(DBManager.getInstance().addUser(id,pwd)){ // 로그인 성공
             dos.writeByte(OPCode.OK);
             System.out.println("Register Success");
-        } else 
-{            dos.writeByte(OPCode.NOK);
+        } else {
+            dos.writeByte(OPCode.NOK);
             System.out.println("Register Failed");
         }
         dos.flush();

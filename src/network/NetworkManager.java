@@ -20,7 +20,7 @@ import utils.Config;
 public class NetworkManager extends Thread {
     private static NetworkManager instance;
     
-    private ArrayList<Client> clientList = new ArrayList<Client>();
+    private ArrayList<Request> requestList = new ArrayList<Request>();
     private ServerSocket serverSocket;
     private boolean isRunning = false;
     
@@ -31,8 +31,8 @@ public class NetworkManager extends Thread {
         return instance;
     }
     
-    public void removeClient(Client c){
-        clientList.remove(c);
+    public void removeRequest(Request c){
+        requestList.remove(c);
     }
     
     public void startServer(){
@@ -42,7 +42,7 @@ public class NetworkManager extends Thread {
     
     public void stopServer(){
         isRunning = false;
-        for(Client c : clientList){
+        for(Request c : requestList){
             c.disconnect();
         }
         try {
@@ -52,18 +52,18 @@ public class NetworkManager extends Thread {
         }
     }
    
-    private void acceptClient(){
+    private void acceptRequest(){
         Socket soc;
-        Client client;
+        Request request;
         try {
             soc = serverSocket.accept();
         } catch (IOException ex) {
             System.err.println("Client accept failed");
             return;
         }
-        client = new Client(soc);
-        clientList.add(client);
-        client.start();
+        request = new Request(soc);
+        requestList.add(request);
+        request.start();
     }
     
     @Override
@@ -77,7 +77,7 @@ public class NetworkManager extends Thread {
         
         while(isRunning){
             System.out.println("Waiting for client...");
-            acceptClient();
+            acceptRequest();
         }
     }
 }
