@@ -82,6 +82,7 @@ public class DBManager {
         }
     }
     
+    
     public boolean addUser(String id, String pwd){
         String sql = String.format("INSERT INTO qc_user (userid, pw) values ('%s','%s')", id, pwd);
         try {
