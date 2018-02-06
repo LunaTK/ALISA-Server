@@ -46,7 +46,7 @@ public class Request extends Thread {
         isRunning=true;
         while(isRunning){
             try {
-                System.out.println("Socket connected : " + socket.isConnected() + ", bis available : " + dis.available());
+//                System.err.println("Request Session Created (" + socket.getInetAddress().getHostAddress() + ")");
                 opcode = dis.readByte();
                 if(opcode<0) {
                     isRunning = false;
@@ -54,7 +54,7 @@ public class Request extends Thread {
                     handlePacket(opcode);
                 }
             } catch (IOException ex) {
-                System.err.println("Request Session Closed");
+//                System.err.println("Request Session Closed");
                 disconnect();
             }
         }
@@ -93,10 +93,10 @@ public class Request extends Thread {
         pwd = dis.readUTF();
         if(DBManager.getInstance().authUser(id,pwd)){ // 로그인 성공
             dos.writeByte(OPCode.OK);
-            System.out.println("Login Success");
+            System.out.println("Login Success for user : " + id);
         } else {
             dos.writeByte(OPCode.NOK);
-            System.out.println("Login Failed");
+            System.out.println("Login Failed for user : " + id);
         }
         dos.flush();
     }
@@ -107,19 +107,19 @@ public class Request extends Thread {
         pwd = dis.readUTF();
         if(DBManager.getInstance().addUser(id,pwd)){ // 로그인 성공
             dos.writeByte(OPCode.OK);
-            System.out.println("Register Success");
+            System.out.println("Register Success for user : " + id);
         } else {
             dos.writeByte(OPCode.NOK);
-            System.out.println("Register Failed");
+            System.out.println("Register Failed for user : " + id);
         }
         dos.flush();
     }
     
     private void handleSensorData() throws IOException {
-        System.out.println("Handling Sensor Data");
+        System.out.println("Sensor Data (Current Time : " + System.currentTimeMillis() + ")");
         String data = null;
         data = dis.readUTF();
-        System.out.println(data);
+//        System.out.println(data);
         dos.writeByte(OPCode.OK);
         dos.flush();
     }

@@ -76,7 +76,7 @@ public class NetworkManager extends Thread {
         }
         
         while(isRunning){
-            System.out.println("Waiting for client...");
+//            System.out.println("Waiting for request...");
             acceptRequest();
         }
     }

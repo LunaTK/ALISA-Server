@@ -72,7 +72,7 @@ public class DBManager {
     }   
     
     public boolean authUser(String id, String pwd){
-        System.out.println("id : " + id + ", pwd : " + pwd);
+//        System.out.println("id : " + id );
         String sql = String.format("SELECT * FROM qc_user where userid='%s' and pw='%s'", id,pwd);
         try {
             return st.executeQuery(sql).first();
