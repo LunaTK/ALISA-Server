@@ -19,6 +19,9 @@ import utils.Config;
  * @author LunaTK
  */
 public class DBManager {
+    
+    
+    
     private Connection connection = null;
     private Statement st = null;
     private ResultSet rs;
@@ -51,7 +54,6 @@ public class DBManager {
     }
     
     public void connectDB(){
-
         try {
             if(connection!=null && connection.isValid(0)) System.err.println("DB already connected.");
         } catch (SQLException ex) {
@@ -71,20 +73,20 @@ public class DBManager {
         }
     }   
     
-    public boolean authUser(String id, String pwd){
+    public int authUser(String id, String pwd){
 //        System.out.println("id : " + id );
-        String sql = String.format("SELECT * FROM qc_user where userid='%s' and pw='%s'", id,pwd);
+        String sql = String.format("SELECT idx FROM qc_user where user_id='%s' and user_password='%s'", id,pwd);
         try {
-            return st.executeQuery(sql).first();
+            ResultSet rs = st.executeQuery(sql);
+            if(rs.first()) return rs.getInt("idx");
         } catch (SQLException ex) {
             Logger.getLogger(DBManager.class.getName()).log(Level.SEVERE, null, ex);
-            return false;
         }
+        return -1;
     }
     
-    
     public boolean addUser(String id, String pwd){
-        String sql = String.format("INSERT INTO qc_user (userid, pw) values ('%s','%s')", id, pwd);
+        String sql = String.format("INSERT INTO qc_user (user_id, user_password) values ('%s','%s')", id, pwd);
         try {
             if(st.executeUpdate(sql)>0) return true;
         } catch (SQLException ex) {
@@ -94,4 +96,27 @@ public class DBManager {
         return false;
     }
     
+    public boolean newSensorData(long hall, double temp, long accX, long accY, long accZ, long gyroX, long gyroY, long gyroZ, long geoX, long geoY, long geoZ){
+        String sql = String.format("INSERT INTO qc_sensor_data (user_idx, hall, temp, accX, accY, accZ, gyroX, gyroY, gyroZ, geoX, geoY, geoZ) "
+                + "values (%d, %d, %f, %d, %d, %d, %d, %d, %d, %d, %d, %d)",0, hall, temp, accX, accY, accZ, gyroX, gyroY, gyroZ, geoX, geoY, geoZ);
+        try {
+            if(st.executeUpdate(sql)>0) return true;
+        } catch (SQLException ex) {
+            Logger.getLogger(DBManager.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+        return false;
+    }
+    
+    public boolean newEventData(int userIdx, int deviceIdx, int eventType, double lon, double lat){
+        String sql = String.format("INSERT INTO qc_event_history (user_idx, device_idx, event_type, longtitude, latitude) values (%d,%d,%d,%f,%f)", userIdx, deviceIdx, eventType, lon, lat);
+        try {
+            if(st.executeUpdate(sql)>0) return true;
+        } catch (SQLException ex) {
+            Logger.getLogger(DBManager.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+        return false;
+    
+    }
 }

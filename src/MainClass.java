@@ -1,5 +1,5 @@
 import database.DBManager;
-import network.NetworkManager;
+import network.RequestManager;
 
 public class MainClass {
 
@@ -7,11 +7,7 @@ public class MainClass {
     {
         System.out.println("Server Start");
         DBManager.getInstance().connectDB();
-        NetworkManager.getInstance().startServer(); 
-    }
-    
-    void connectToServer(){
-        System.out.println("서버에 연결한다");
+        RequestManager.getInstance().startServer(); 
     }
     
 }
