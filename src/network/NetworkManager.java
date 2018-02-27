@@ -9,23 +9,25 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import utils.Config;
 
 /**
  *
  * @author LunaTK
  */
-public class RequestManager extends Thread {
-    private static RequestManager instance;
+public class NetworkManager extends Thread {
+    private static NetworkManager instance;
     
     private ArrayList<Request> requestList = new ArrayList<Request>();
     private ServerSocket serverSocket;
     private boolean isRunning = false;
     
-    private RequestManager(){}
+    private NetworkManager(){}
     
-    public static RequestManager getInstance(){
-        if(instance == null) instance = new RequestManager();
+    public static NetworkManager getInstance(){
+        if(instance == null) instance = new NetworkManager();
         return instance;
     }
     
@@ -36,12 +38,10 @@ public class RequestManager extends Thread {
     public void startServer(){
         isRunning = true;
         this.start();
-        SessionManager.getInstance().start();
     }
     
     public void stopServer(){
         isRunning = false;
-        SessionManager.getInstance().stopRunning();
         for(Request c : requestList){
             c.disconnect();
         }
@@ -72,11 +72,11 @@ public class RequestManager extends Thread {
             serverSocket = new ServerSocket(Config.SERVER_PORT);
         } catch (IOException ex) {
             System.err.println("Port already in use.");
-            stopServer();
             return;
         }
+        
         while(isRunning){
-//            System.out.println("Waiting for request...");
+            System.out.println("Waiting for client...");
             acceptRequest();
         }
     }
